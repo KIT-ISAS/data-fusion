@@ -10,17 +10,17 @@ class PerformanceCriterion(Enum):
 
 
 class CovarianceIntersection(object):
-    def __init__(self, performance_criterion):
+    def __init__(self, performance_criterion=PerformanceCriterion.DETERMINANT):
         self.performance_criterion = det if performance_criterion == PerformanceCriterion.DETERMINANT else np.trace
 
     def fuse(self, mean_a, cov_a, mean_b, cov_b):
         omega = self.optimize_omega(cov_a, cov_b)
-        p_cc = inv(omega * inv(cov_a) + (1 - omega) * inv(cov_b))
-        c = p_cc * (omega * inv(cov_a) * mean_a + (1 - omega) * inv(cov_b) * mean_b)
+        p_cc = inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b)))
+        c = np.dot(p_cc, (np.dot(np.multiply(omega, inv(cov_a)), mean_a) + np.dot(np.multiply(1 - omega, inv(cov_b)), mean_b)))
         return c, p_cc
 
     def optimize_omega(self, cov_a, cov_b):
         def optimize_fn(omega):
-            self.performance_criterion(inv(omega * inv(cov_a) + (1 - omega) * inv(cov_b)))
+            return self.performance_criterion(inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b))))
         omega_0 = np.array([1.0])
-        return minimize(optimize_fn, omega_0)[0]
+        return minimize(optimize_fn, omega_0).x[0]

@@ -16,14 +16,14 @@ class ConstantAcceleration(object):
                            [delta_t]])
         self.noise_stddev = np.sqrt(noise_variance)
         self.current_state = initial_state
-        self.states = [initial_state]
+        self.states = []
 
     def step(self):
         """
         Updates the current state.
         """
         process_noise = np.random.normal(0, scale=self.noise_stddev)
-        self.current_state = np.add(self.F.dot(self.current_state), np.multiply(self.G, process_noise))
+        self.current_state = np.dot(self.F, self.current_state) + np.multiply(self.G, process_noise)
         self.states.append(self.current_state)
 
     def plot(self):
