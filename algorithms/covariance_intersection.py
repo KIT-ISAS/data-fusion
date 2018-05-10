@@ -1,3 +1,7 @@
+"""
+Covariance Intersection according to http://discovery.ucl.ac.uk/135541/
+"""
+
 from enum import Enum
 from scipy.optimize import minimize
 from numpy.linalg import inv, det
@@ -15,9 +19,9 @@ class CovarianceIntersection(object):
 
     def fuse(self, mean_a, cov_a, mean_b, cov_b):
         omega = self.optimize_omega(cov_a, cov_b)
-        p_cc = inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b)))
-        c = np.dot(p_cc, (np.dot(np.multiply(omega, inv(cov_a)), mean_a) + np.dot(np.multiply(1 - omega, inv(cov_b)), mean_b)))
-        return c, p_cc
+        cov = inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b)))
+        mean = np.dot(cov, (np.dot(np.multiply(omega, inv(cov_a)), mean_a) + np.dot(np.multiply(1 - omega, inv(cov_b)), mean_b)))
+        return mean, cov
 
     def optimize_omega(self, cov_a, cov_b):
         def optimize_fn(omega):
