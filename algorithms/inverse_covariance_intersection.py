@@ -16,6 +16,8 @@ class PerformanceCriterion(Enum):
 class InverseCovarianceIntersection(object):
     def __init__(self, performance_criterion=PerformanceCriterion.DETERMINANT):
         self.performance_criterion = det if performance_criterion == PerformanceCriterion.DETERMINANT else np.trace
+        self.algorithm_name = "Inverse Covariance Intersection"
+        self.algorithm_abbreviation = "ICI"
 
     def fuse(self, mean_a, cov_a, mean_b, cov_b):
         omega = self.optimize_omega(cov_a, cov_b)

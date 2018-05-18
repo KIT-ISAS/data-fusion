@@ -7,6 +7,10 @@ import numpy as np
 
 
 class Naive(object):
+    def __init__(self):
+        self.algorithm_name = "Naive"
+        self.algorithm_abbreviation = "Naive"
+
     def fuse(self, mean_a, cov_a, mean_b, cov_b):
         cov_a_inv = inv(cov_a)
         cov_b_inv = inv(cov_b)
