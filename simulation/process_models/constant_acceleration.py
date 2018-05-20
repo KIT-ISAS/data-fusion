@@ -26,16 +26,16 @@ class ConstantAcceleration(object):
         self.current_state = np.dot(self.F, self.current_state) + np.multiply(self.G, process_noise)
         self.states.append(self.current_state)
 
-    def plot(self):
+    def plot(self, axes):
         """
-        Shows a pyplot figure of the model's state history.
+        Creates a pyplot figure of the model's state history.
         """
         states = list(map(lambda x: np.squeeze(np.asarray(x)), self.states))
         positions = [state[0] for state in states]
         velocities = [state[1] for state in states]
         accelerations = [state[2] for state in states]
-        plt.plot(positions, label="Position")
-        plt.plot(velocities, label="Velocity")
-        plt.plot(accelerations, label="Acceleration")
-        plt.legend()
-        plt.show()
+        axes.plot(positions, label="Position")
+        axes.plot(velocities, label="Velocity")
+        axes.plot(accelerations, label="Acceleration")
+        axes.legend()
+        return axes
