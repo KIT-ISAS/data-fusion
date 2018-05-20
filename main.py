@@ -5,10 +5,37 @@ from algorithms.inverse_covariance_intersection import InverseCovarianceIntersec
 from algorithms.naive import Naive
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 import numpy as np
 import random
 import argparse
+import math
 
+
+def ellipse_bounding_box(w, h, theta):
+    ux = w * math.cos(theta)
+    uy = w * math.sin(theta)
+    vx = h * math.cos(theta + math.pi / 2.0)
+    vy = h * math.sin(theta + math.pi / 2.0)
+    bbox_halfwidth = math.sqrt(ux * ux + vx * vx)
+    bbox_halfheight = math.sqrt(uy * uy + vy * vy)
+    return bbox_halfwidth, bbox_halfheight
+
+
+def plot_covariance_ellipse(axes, cov, color, linestyle="solid"):
+    # Compute eigenvalues and associated eigenvectors
+    vals, vecs = np.linalg.eigh(cov)
+
+    # Compute "tilt" of ellipse using first eigenvector
+    x, y = vecs[:2, 0]
+    theta = np.degrees(np.arctan2(y, x))
+
+    # Eigenvalues give length of ellipse along each eigenvector
+    w, h = 2 * np.sqrt(vals[:2])
+    axes.tick_params(axis='both', which='major')#, labelsize=20)
+    ellipse = Ellipse([0,0], w, h, theta, linestyle=linestyle, linewidth=1.5, color=color, fill=False)
+    ellipse.set_clip_box(axes.bbox)
+    axes.add_patch(ellipse)
 
 def main(args):
     seed = random.randint(0, 1000) if args.seed is None else args.seed
@@ -77,6 +104,21 @@ def main(args):
     acc_axes.set_title("Acceleration")
 
     res_fig.show()
+
+    # Plot covariance ellipses
+    plt.rcParams["figure.figsize"] = (4, 3)
+    ellipse_fig = plt.figure(3)
+    ellipse_axes = ellipse_fig.add_subplot(1, 1, 1)
+    for i, alg in enumerate(fused_estimates.keys()):
+        plot_covariance_ellipse(ellipse_axes, fused_estimates[alg]["A"][-1][1], "C{}".format(i))
+    plot_covariance_ellipse(ellipse_axes, local_estimates["A"][-1][1], "C{}".format(len(fusion_algorithms)), "dashed")
+    plot_covariance_ellipse(ellipse_axes, local_estimates["B"][-1][1], "C{}".format(len(fusion_algorithms) + 1), "dashed")
+    ellipse_axes.autoscale()
+    ellipse_axes.set_aspect("auto")
+    labels = list(fused_estimates.keys())
+    labels.extend(["A","B"])
+    ellipse_axes.legend(labels)
+    ellipse_fig.show()
 
 
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ class EllipsoidalIntersection(object):
         if det(H) == 0:
             eta = 0
         else:
-            eig_H, _ = np.linalg.eig(H)
+            eig_H, _ = np.linalg.eigh(H)
             smallest_nonzero_ev = min(list(filter(lambda x: x != 0, eig_H)))
             eta = 0.0001 * smallest_nonzero_ev
         eta_I = np.multiply(eta, np.identity(dims))
@@ -52,10 +52,10 @@ class EllipsoidalIntersection(object):
         return np.dot(first_term, second_term)
 
     def mutual_covariance(self, cov_a, cov_b):
-        D_a, S_a = np.linalg.eig(cov_a)
+        D_a, S_a = np.linalg.eigh(cov_a)
         D_a_sqrt = sqrtm(np.diag(D_a))
         D_a_sqrt_inv = inv(D_a_sqrt)
         M = np.dot(np.dot(np.dot(np.dot(D_a_sqrt_inv, inv(S_a)), cov_b), S_a), D_a_sqrt_inv)    # eqn. 10 in Sijs et al.
-        D_b, S_b = np.linalg.eig(M)
+        D_b, S_b = np.linalg.eigh(M)
         D_gamma = np.diag(np.clip(D_b, a_min=1.0, a_max=None))   # eqn. 11b in Sijs et al.
         return np.dot(np.dot(np.dot(np.dot(np.dot(np.dot(S_a, D_a_sqrt), S_b), D_gamma), inv(S_b)), D_a_sqrt), inv(S_a))  # eqn. 11a in Sijs et al.
