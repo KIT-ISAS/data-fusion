@@ -7,8 +7,8 @@ import numpy as np
 class SimpleSensorNetworkSimulation(object):
     def __init__(self, fusion_algorithm):
         self.process = ConstantAcceleration(initial_state=np.zeros(shape=(3,1)), delta_t=0.01)
-        random_matrix_A = np.random.rand(3,3)
-        random_matrix_B = np.random.rand(3,3)
+        random_matrix_A = np.random.rand(3,3) * 0.3
+        random_matrix_B = np.random.rand(3,3) * 0.3
         measurement_cov_a = np.dot(random_matrix_A, random_matrix_A.T)
         measurement_cov_b = np.dot(random_matrix_B, random_matrix_B.T)
         self.node_a = KalmanSensorNode(0, self.process, fusion_algorithm, transition_matrices=self.process.F, measurement_covariance=measurement_cov_a)

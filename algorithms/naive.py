@@ -17,5 +17,5 @@ class Naive(object):
         cov = inv(cov_a_inv + cov_b_inv)
         K = np.dot(cov, cov_a_inv)
         L = np.dot(cov, cov_b_inv)
-        mean = np.dot(K, mean_a) + np.dot(K, mean_b)
+        mean = np.dot(K, mean_a) + np.dot(L, mean_b)
         return mean, cov

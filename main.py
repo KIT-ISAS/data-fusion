@@ -30,6 +30,7 @@ def plot_covariance_ellipse(axes, cov, color, linestyle="solid", fill=False, fil
     ellipse = Ellipse([0,0], w, h, theta, linestyle=linestyle, linewidth=1.5, facecolor=fill_color_spec, edgecolor=color)
     axes.add_patch(ellipse)
 
+
 def plot_results(fusion_algorithms, process_states, fused_estimates):
     # Plot results
     pos_real = [x[0] for x in process_states]
@@ -67,7 +68,8 @@ def plot_results(fusion_algorithms, process_states, fused_estimates):
     acc_axes.set_title("Acceleration")
     res_fig.show()
 
-def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
+
+def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates, seed):
     # Plot covariance ellipses
     plt.rcParams["figure.figsize"] = (4, 4)
     ellipse_fig = plt.figure(3)
@@ -84,6 +86,7 @@ def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
     labels.extend(["A", "B"])
     ellipse_axes.legend(labels)
     ellipse_fig.show()
+    ellipse_fig.clf()
 
     # Plot inverse covariance ellipses
     plt.rcParams["figure.figsize"] = (4, 4)
@@ -101,6 +104,8 @@ def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
     labels.extend(["A", "B"])
     inverse_ellipse_axes.legend(labels)
     inverse_ellipse_fig.show()
+    inverse_ellipse_fig.clf()
+
 
 def plot_process(process):
     plt.rcParams["figure.figsize"] = (4, 3)
@@ -108,6 +113,7 @@ def plot_process(process):
     proc_axes = proc_fig.add_subplot(111)
     process.plot(proc_axes)
     proc_fig.show()
+
 
 def main(args):
     seed = random.randint(0, 1000) if args.seed is None else args.seed
@@ -138,7 +144,7 @@ def main(args):
             "B": sim.node_b.fused_estimates
         }
     plot_results(fusion_algorithms, process_states, fused_estimates)
-    plot_ellipses(fusion_algorithms, local_estimates, fused_estimates)
+    plot_ellipses(fusion_algorithms, local_estimates, fused_estimates, seed)
 
 
 if __name__ == "__main__":
