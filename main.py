@@ -6,23 +6,14 @@ from algorithms.naive import Naive
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
+import matplotlib.colors
 import numpy as np
 import random
 import argparse
-import math
+from numpy.linalg import inv
 
 
-def ellipse_bounding_box(w, h, theta):
-    ux = w * math.cos(theta)
-    uy = w * math.sin(theta)
-    vx = h * math.cos(theta + math.pi / 2.0)
-    vy = h * math.sin(theta + math.pi / 2.0)
-    bbox_halfwidth = math.sqrt(ux * ux + vx * vx)
-    bbox_halfheight = math.sqrt(uy * uy + vy * vy)
-    return bbox_halfwidth, bbox_halfheight
-
-
-def plot_covariance_ellipse(axes, cov, color, linestyle="solid"):
+def plot_covariance_ellipse(axes, cov, color, linestyle="solid", fill=False, fill_alpha=0.0):
     # Compute eigenvalues and associated eigenvectors
     vals, vecs = np.linalg.eigh(cov)
 
@@ -33,8 +24,10 @@ def plot_covariance_ellipse(axes, cov, color, linestyle="solid"):
     # Eigenvalues give length of ellipse along each eigenvector
     w, h = 2 * np.sqrt(vals[:2])
     axes.tick_params(axis='both', which='major')#, labelsize=20)
-    ellipse = Ellipse([0,0], w, h, theta, linestyle=linestyle, linewidth=1.5, color=color, fill=False)
-    ellipse.set_clip_box(axes.bbox)
+
+    fill_color_spec = list(matplotlib.colors.to_rgba(color))
+    fill_color_spec[-1] = fill_alpha
+    ellipse = Ellipse([0,0], w, h, theta, linestyle=linestyle, linewidth=1.5, facecolor=fill_color_spec, edgecolor=color)
     axes.add_patch(ellipse)
 
 def main(args):
@@ -58,7 +51,7 @@ def main(args):
             proc_fig = plt.figure(1)
             proc_axes = proc_fig.add_subplot(111)
             sim.process.plot(proc_axes)
-            proc_fig.show()
+            #proc_fig.show()
 
             # Save local estimates
             local_estimates["A"] = sim.node_a.local_estimates
@@ -103,16 +96,16 @@ def main(args):
     acc_axes.legend()
     acc_axes.set_title("Acceleration")
 
-    res_fig.show()
+    #res_fig.show()
 
     # Plot covariance ellipses
-    plt.rcParams["figure.figsize"] = (4, 3)
+    plt.rcParams["figure.figsize"] = (4, 4)
     ellipse_fig = plt.figure(3)
     ellipse_axes = ellipse_fig.add_subplot(1, 1, 1)
     for i, alg in enumerate(fused_estimates.keys()):
         plot_covariance_ellipse(ellipse_axes, fused_estimates[alg]["A"][-1][1], "C{}".format(i))
-    plot_covariance_ellipse(ellipse_axes, local_estimates["A"][-1][1], "C{}".format(len(fusion_algorithms)), "dashed")
-    plot_covariance_ellipse(ellipse_axes, local_estimates["B"][-1][1], "C{}".format(len(fusion_algorithms) + 1), "dashed")
+    plot_covariance_ellipse(ellipse_axes, local_estimates["A"][-1][1], "C{}".format(len(fusion_algorithms)), "dashed", True, 0.2)
+    plot_covariance_ellipse(ellipse_axes, local_estimates["B"][-1][1], "C{}".format(len(fusion_algorithms) + 1), "dashed", True, 0.2)
     ellipse_axes.autoscale()
     ellipse_axes.set_aspect("auto")
     labels = list(fused_estimates.keys())
@@ -120,6 +113,20 @@ def main(args):
     ellipse_axes.legend(labels)
     ellipse_fig.show()
 
+    # Plot inverse covariance matrices
+    plt.rcParams["figure.figsize"] = (4, 4)
+    inverse_ellipse_fig = plt.figure(4)
+    inverse_ellipse_axes = inverse_ellipse_fig.add_subplot(1, 1, 1)
+    for i, alg in enumerate(fused_estimates.keys()):
+        plot_covariance_ellipse(inverse_ellipse_axes, inv(fused_estimates[alg]["A"][-1][1]), "C{}".format(i))
+    plot_covariance_ellipse(inverse_ellipse_axes, inv(local_estimates["A"][-1][1]), "C{}".format(len(fusion_algorithms)), "dashed", True, 0.2)
+    plot_covariance_ellipse(inverse_ellipse_axes, inv(local_estimates["B"][-1][1]), "C{}".format(len(fusion_algorithms) + 1), "dashed", True, 0.2)
+    inverse_ellipse_axes.autoscale()
+    inverse_ellipse_axes.set_aspect("auto")
+    labels = list(fused_estimates.keys())
+    labels.extend(["A","B"])
+    inverse_ellipse_axes.legend(labels)
+    inverse_ellipse_fig.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
