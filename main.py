@@ -4,31 +4,13 @@ from algorithms.ellipsoidal_intersection import EllipsoidalIntersection
 from algorithms.inverse_covariance_intersection import InverseCovarianceIntersection
 from algorithms.naive import Naive
 
+from plotting import plotting
+
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
-import matplotlib.colors
 import numpy as np
 import random
 import argparse
 from numpy.linalg import inv
-
-
-def plot_covariance_ellipse(axes, cov, color, linestyle="solid", fill=False, fill_alpha=0.0):
-    # Compute eigenvalues and associated eigenvectors
-    vals, vecs = np.linalg.eigh(cov)
-
-    # Compute "tilt" of ellipse using first eigenvector
-    x, y = vecs[:2, 0]
-    theta = np.degrees(np.arctan2(y, x))
-
-    # Eigenvalues give length of ellipse along each eigenvector
-    w, h = 2 * np.sqrt(vals[:2])
-    axes.tick_params(axis='both', which='major')#, labelsize=20)
-
-    fill_color_spec = list(matplotlib.colors.to_rgba(color))
-    fill_color_spec[-1] = fill_alpha
-    ellipse = Ellipse([0,0], w, h, theta, linestyle=linestyle, linewidth=1.5, facecolor=fill_color_spec, edgecolor=color)
-    axes.add_patch(ellipse)
 
 
 def plot_results(fusion_algorithms, process_states, fused_estimates):
@@ -69,17 +51,17 @@ def plot_results(fusion_algorithms, process_states, fused_estimates):
     res_fig.show()
 
 
-def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates, seed):
+def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
     # Plot covariance ellipses
     plt.rcParams["figure.figsize"] = (4, 4)
     ellipse_fig = plt.figure(3)
     ellipse_axes = ellipse_fig.add_subplot(1, 1, 1)
     for i, alg in enumerate(fused_estimates.keys()):
-        plot_covariance_ellipse(ellipse_axes, fused_estimates[alg]["A"][-1][1], "C{}".format(i))
-    plot_covariance_ellipse(ellipse_axes, local_estimates["A"][-1][1], "C{}".format(len(fusion_algorithms)), "dotted",
-                            True, 0.2)
-    plot_covariance_ellipse(ellipse_axes, local_estimates["B"][-1][1], "C{}".format(len(fusion_algorithms) + 1),
-                            "dotted", True, 0.2)
+        plotting.plot_covariance_ellipse(ellipse_axes, fused_estimates[alg]["A"][-1][1], "C{}".format(i))
+    plotting.plot_covariance_ellipse(ellipse_axes, local_estimates["A"][-1][1], "C{}".format(len(fusion_algorithms)), "dotted",
+                            0.2)
+    plotting.plot_covariance_ellipse(ellipse_axes, local_estimates["B"][-1][1], "C{}".format(len(fusion_algorithms) + 1),
+                            "dotted", 0.2)
     ellipse_axes.autoscale()
     ellipse_axes.set_aspect("auto")
     labels = list(fused_estimates.keys())
@@ -93,11 +75,11 @@ def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates, seed):
     inverse_ellipse_fig = plt.figure(4)
     inverse_ellipse_axes = inverse_ellipse_fig.add_subplot(1, 1, 1)
     for i, alg in enumerate(fused_estimates.keys()):
-        plot_covariance_ellipse(inverse_ellipse_axes, inv(fused_estimates[alg]["A"][-1][1]), "C{}".format(i))
-    plot_covariance_ellipse(inverse_ellipse_axes, inv(local_estimates["A"][-1][1]),
-                            "C{}".format(len(fusion_algorithms)), "dotted", True, 0.2)
-    plot_covariance_ellipse(inverse_ellipse_axes, inv(local_estimates["B"][-1][1]),
-                            "C{}".format(len(fusion_algorithms) + 1), "dotted", True, 0.2)
+        plotting.plot_covariance_ellipse(inverse_ellipse_axes, inv(fused_estimates[alg]["A"][-1][1]), "C{}".format(i))
+    plotting.plot_covariance_ellipse(inverse_ellipse_axes, inv(local_estimates["A"][-1][1]),
+                            "C{}".format(len(fusion_algorithms)), "dotted", 0.2)
+    plotting.plot_covariance_ellipse(inverse_ellipse_axes, inv(local_estimates["B"][-1][1]),
+                            "C{}".format(len(fusion_algorithms) + 1), "dotted", 0.2)
     inverse_ellipse_axes.autoscale()
     inverse_ellipse_axes.set_aspect("auto")
     labels = list(fused_estimates.keys())
@@ -144,7 +126,7 @@ def main(args):
             "B": sim.node_b.fused_estimates
         }
     plot_results(fusion_algorithms, process_states, fused_estimates)
-    plot_ellipses(fusion_algorithms, local_estimates, fused_estimates, seed)
+    plot_ellipses(fusion_algorithms, local_estimates, fused_estimates)
 
 
 if __name__ == "__main__":
