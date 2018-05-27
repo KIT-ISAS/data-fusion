@@ -29,4 +29,4 @@ class CovarianceIntersection(object):
         def optimize_fn(omega):
             return self.performance_criterion(inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b))))
         omega_0 = np.array([1.0])
-        return minimize(optimize_fn, omega_0).x[0]
+        return np.clip(minimize(optimize_fn, omega_0).x[0], 0, 1)
