@@ -10,11 +10,10 @@ import matplotlib.pyplot as plt
 
 class TestFusionAlgorithms(TestCase):
 
-    #@skip("Shows a plot - run manually")
     def test_fusion_algorithms(self):
         # Create two random measurements
         seed = np.random.randint(0, 1000)
-        #seed = 567
+        seed = 810
         print("Seed: {}".format(seed))
         np.random.seed(seed)
         random_matrix_a = np.random.rand(2,2)

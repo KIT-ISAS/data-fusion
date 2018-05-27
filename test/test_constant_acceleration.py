@@ -21,7 +21,6 @@ class TestConstantAcceleration(TestCase):
                 self.assertAlmostEqual(current_state[0], pos + vel * i + 0.5 * acc * (i ** 2))
                 model.step()
 
-    @skip("Shows a plot - run manually")
     def test_plot(self):
         acc = random.uniform(-10, 10)
         vel = random.uniform(-10, 10)
