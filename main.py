@@ -13,48 +13,70 @@ import argparse
 from numpy.linalg import inv
 
 
-def plot_results(fusion_algorithms, process_states, fused_estimates):
-    # Plot results
+def plot_results(fusion_algorithms, process_states, fused_estimates, node="A"):
     pos_real = [x[0] for x in process_states]
     vel_real = [x[1] for x in process_states]
-    acc_real = [x[2] for x in process_states]
     pos_fused = {}
     vel_fused = {}
-    acc_fused = {}
     for alg in fusion_algorithms:
-        pos_fused[alg.algorithm_abbreviation] = [x[0][0] for x in fused_estimates[alg.algorithm_abbreviation]["A"]]
-        vel_fused[alg.algorithm_abbreviation] = [x[0][1] for x in fused_estimates[alg.algorithm_abbreviation]["A"]]
-        acc_fused[alg.algorithm_abbreviation] = [x[0][2] for x in fused_estimates[alg.algorithm_abbreviation]["A"]]
+        pos_fused[alg.algorithm_abbreviation] = [x[0][0] for x in fused_estimates[alg.algorithm_abbreviation][node]]
+        vel_fused[alg.algorithm_abbreviation] = [x[0][1] for x in fused_estimates[alg.algorithm_abbreviation][node]]
 
     plt.rcParams["figure.figsize"] = (8, 8)
     res_fig = plt.figure(2)
-    pos_axes = res_fig.add_subplot(3, 1, 1)
+    pos_axes = res_fig.add_subplot(2, 1, 1)
     pos_axes.plot(pos_real, label="Real")
     for alg in pos_fused.keys():
         pos_axes.plot(pos_fused[alg], label=alg)
     pos_axes.legend()
-    pos_axes.set_title("Position")
+    pos_axes.set_title("Position (Node {})".format(node))
 
-    vel_axes = res_fig.add_subplot(3, 1, 2)
+    vel_axes = res_fig.add_subplot(2, 1, 2)
     vel_axes.plot(vel_real, label="Real")
     for alg in vel_fused.keys():
         vel_axes.plot(vel_fused[alg], label=alg)
     vel_axes.legend()
-    vel_axes.set_title("Velocity")
+    vel_axes.set_title("Velocity (Node {})".format(node))
 
-    acc_axes = res_fig.add_subplot(3, 1, 3)
-    acc_axes.plot(acc_real, label="Real")
-    for alg in acc_fused.keys():
-        acc_axes.plot(acc_fused[alg], label=alg)
-    acc_axes.legend()
-    acc_axes.set_title("Acceleration")
+    res_fig.show()
+
+
+def plot_estimation_errors(fusion_algorithms, process_states, fused_estimates, node="A"):
+    pos_real = [x[0] for x in process_states]
+    vel_real = [x[1] for x in process_states]
+    pos_fused = {}
+    vel_fused = {}
+    for alg in fusion_algorithms:
+        pos_fused[alg.algorithm_abbreviation] = [x[0][0] for x in fused_estimates[alg.algorithm_abbreviation][node]]
+        vel_fused[alg.algorithm_abbreviation] = [x[0][1] for x in fused_estimates[alg.algorithm_abbreviation][node]]
+    pos_squared_errors = {}
+    vel_squared_errors = {}
+    for alg in fusion_algorithms:
+        alg_abbr = alg.algorithm_abbreviation
+        pos_squared_errors[alg.algorithm_abbreviation] = [(pos_fused[alg_abbr][idx] - pos_real[idx])**2 for idx in range(len(pos_real))]
+        vel_squared_errors[alg.algorithm_abbreviation] = [(vel_fused[alg_abbr][idx] - vel_real[idx])**2 for idx in range(len(vel_real))]
+
+    #plt.rcParams["figure.figsize"] = (8, 8)
+    res_fig = plt.figure()
+    pos_axes = res_fig.add_subplot(2, 1, 1)
+    for alg in pos_squared_errors.keys():
+        pos_axes.plot(pos_squared_errors[alg], label=alg)
+    pos_axes.legend()
+    pos_axes.set_title("Squared Error (Position) (Node {})".format(node))
+
+    vel_axes = res_fig.add_subplot(2, 1, 2)
+    for alg in vel_squared_errors.keys():
+        vel_axes.plot(vel_squared_errors[alg], label=alg)
+    vel_axes.legend()
+    vel_axes.set_title("Squared Error (Velocity) (Node {})".format(node))
+
     res_fig.show()
 
 
 def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
     # Plot covariance ellipses
     plt.rcParams["figure.figsize"] = (4, 4)
-    ellipse_fig = plt.figure(3)
+    ellipse_fig = plt.figure()
     ellipse_axes = ellipse_fig.add_subplot(1, 1, 1)
     for i, alg in enumerate(fused_estimates.keys()):
         plotting.plot_covariance_ellipse(ellipse_axes, fused_estimates[alg]["A"][-1][1], "C{}".format(i))
@@ -71,8 +93,9 @@ def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
     ellipse_fig.clf()
 
     # Plot inverse covariance ellipses
+    """
     plt.rcParams["figure.figsize"] = (4, 4)
-    inverse_ellipse_fig = plt.figure(4)
+    inverse_ellipse_fig = plt.figure()
     inverse_ellipse_axes = inverse_ellipse_fig.add_subplot(1, 1, 1)
     for i, alg in enumerate(fused_estimates.keys()):
         plotting.plot_covariance_ellipse(inverse_ellipse_axes, inv(fused_estimates[alg]["A"][-1][1]), "C{}".format(i))
@@ -87,11 +110,12 @@ def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):
     inverse_ellipse_axes.legend(labels)
     inverse_ellipse_fig.show()
     inverse_ellipse_fig.clf()
+    """
 
 
 def plot_process(process):
     plt.rcParams["figure.figsize"] = (4, 3)
-    proc_fig = plt.figure(1)
+    proc_fig = plt.figure()
     proc_axes = proc_fig.add_subplot(111)
     process.plot(proc_axes)
     proc_fig.show()
@@ -126,7 +150,8 @@ def main(args):
             "B": sim.node_b.fused_estimates
         }
     plot_results(fusion_algorithms, process_states, fused_estimates)
-    plot_ellipses(fusion_algorithms, local_estimates, fused_estimates)
+    plot_estimation_errors(fusion_algorithms, process_states, fused_estimates)
+    #plot_ellipses(fusion_algorithms, local_estimates, fused_estimates)
 
 
 if __name__ == "__main__":
