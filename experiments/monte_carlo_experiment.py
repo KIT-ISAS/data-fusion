@@ -2,6 +2,7 @@ import random
 import numpy as np
 import argparse
 from multiprocessing import Pool
+import matplotlib.pyplot as plt
 
 from simulation.simple_sensor_network import SimpleSensorNetworkSimulation
 from algorithms.covariance_intersection import CovarianceIntersection
@@ -21,6 +22,38 @@ class MonteCarloExperiment(object):
         mat = estimate[1] - np.dot(error_vec, error_vec.T)
         pos_semidefinite = np.all(np.linalg.eigvals(mat) >= 0)
         return pos_semidefinite
+
+    def plot_mean_squared_errors(self, process_states, fused_estimates, node="A"):
+        timesteps = len(process_states[0])
+        pos_mse = {}
+        vel_mse = {}
+        for alg in self.fusion_algorithms:
+            pos_squared_errors = []
+            vel_squared_errors = []
+            for run_idx, item in enumerate(fused_estimates):
+               pos_fused = [item[alg.algorithm_abbreviation][node][i][0][0] for i in range(timesteps)]
+               vel_fused = [item[alg.algorithm_abbreviation][node][i][0][1] for i in range(timesteps)]
+               pos_squared_errors.append([(pos_fused[i] - process_states[run_idx][i][0])**2 for i in range(timesteps)])
+               vel_squared_errors.append([(vel_fused[i] - process_states[run_idx][i][1])**2 for i in range(timesteps)])
+            pos_mse[alg.algorithm_abbreviation] = np.mean(pos_squared_errors, axis=0)
+            vel_mse[alg.algorithm_abbreviation] = np.mean(vel_squared_errors, axis=0)
+
+        plt.rcParams["figure.figsize"] = (8, 8)
+        res_fig = plt.figure()
+        pos_axes = res_fig.add_subplot(2, 1, 1)
+        for alg in pos_mse.keys():
+            pos_axes.plot(pos_mse[alg], label=alg)
+        pos_axes.legend()
+        pos_axes.set_title("Position MSE (Node {})".format(node))
+
+        vel_axes = res_fig.add_subplot(2, 1, 2)
+        for alg in vel_mse.keys():
+            vel_axes.plot(vel_mse[alg], label=alg)
+        vel_axes.legend()
+        vel_axes.set_title("Velocity MSE (Node {})".format(node))
+
+        res_fig.show()
+
 
     def run_trial(self, timesteps):
         seed = random.randint(0, 10000)
@@ -43,27 +76,18 @@ class MonteCarloExperiment(object):
                 "A": sim.node_a.fused_estimates,
                 "B": sim.node_b.fused_estimates
             }
-            consistent[fusion_algorithm.algorithm_abbreviation] = [self.is_consistent(fused_estimates[fusion_algorithm.algorithm_abbreviation]["A"][ts], process_states[ts]) for ts in
-                               range(timesteps)]
-        return consistent
+            #consistent[fusion_algorithm.algorithm_abbreviation] = [self.is_consistent(fused_estimates[fusion_algorithm.algorithm_abbreviation]["A"][ts], process_states[ts]) for ts in range(timesteps)]
+        return process_states, fused_estimates
 
     def run(self, runs, timesteps):
+        print("Running Monte Carlo simulation with {} runs à {} timesteps...".format(runs, timesteps))
         self.trials_completed = 0
         pool = Pool()
-        consistent = pool.map(self.run_trial, [timesteps for i in range(runs)])
+        res = pool.map(self.run_trial, [timesteps for i in range(runs)])
         pool.close()
         pool.join()
-
-        for alg in self.fusion_algorithms:
-            abbr = alg.algorithm_abbreviation
-            consistent_count = 0
-            for run in range(runs):
-                run_res = consistent[run][abbr]
-                for timestep in range(timesteps):
-                    if run_res[timestep]:
-                        consistent_count += 1
-            percentage_consistent = (consistent_count / (runs * timesteps)) * 100
-            print("{}: {}% ({} / {})".format(abbr, percentage_consistent, consistent_count, runs * timesteps))
+        process_states, fused_estimates = map(list, zip(*res))
+        self.plot_mean_squared_errors(process_states, fused_estimates)
 
 
 def main(args):
