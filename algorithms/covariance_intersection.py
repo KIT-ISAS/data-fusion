@@ -14,7 +14,7 @@ class PerformanceCriterion(Enum):
 
 
 class CovarianceIntersection(object):
-    def __init__(self, performance_criterion=PerformanceCriterion.DETERMINANT):
+    def __init__(self, performance_criterion=PerformanceCriterion.TRACE):
         self.performance_criterion = det if performance_criterion == PerformanceCriterion.DETERMINANT else np.trace
         self.algorithm_name = "Covariance Intersection"
         self.algorithm_abbreviation = "CI"
