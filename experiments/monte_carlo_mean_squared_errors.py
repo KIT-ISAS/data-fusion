@@ -40,7 +40,7 @@ class MonteCarloMeanSquaredErrors(object):
             pos_mse[alg.algorithm_abbreviation] = np.mean(pos_squared_errors, axis=0)
             vel_mse[alg.algorithm_abbreviation] = np.mean(vel_squared_errors, axis=0)
 
-        plt.rcParams["figure.figsize"] = (8, 8)
+        plt.rcParams["figure.figsize"] = (6, 5)
         res_fig = plt.figure()
         pos_axes = res_fig.add_subplot(2, 1, 1)
         for alg in pos_mse.keys():
