@@ -12,7 +12,7 @@ class TestFusionAlgorithms(TestCase):
 
     def test_fusion_algorithms(self):
         # Create two random measurements
-        seed = np.random.randint(0, 1000)
+        #seed = np.random.randint(0, 1000)
         seed = 810
         print("Seed: {}".format(seed))
         np.random.seed(seed)

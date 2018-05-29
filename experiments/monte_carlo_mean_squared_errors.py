@@ -4,6 +4,7 @@ import argparse
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 
+from simulation.process_models.constant_velocity import ConstantVelocity
 from simulation.simple_sensor_network import SimpleSensorNetworkSimulation
 from algorithms.covariance_intersection import CovarianceIntersection
 from algorithms.ellipsoidal_intersection import EllipsoidalIntersection
@@ -11,10 +12,11 @@ from algorithms.inverse_covariance_intersection import InverseCovarianceIntersec
 from algorithms.naive import Naive
 
 
-class MonteCarloExperiment(object):
-    def __init__(self, fusion_algorithms, simulation_class):
+class MonteCarloMeanSquaredErrors(object):
+    def __init__(self, fusion_algorithms, simulation_class, process):
         self.fusion_algorithms = fusion_algorithms
         self.simulation_class = simulation_class
+        self.process = process
 
     @staticmethod
     def is_consistent(estimate, process_state):
@@ -60,11 +62,10 @@ class MonteCarloExperiment(object):
         process_states = []
         local_estimates = {}
         fused_estimates = {}
-        consistent = {}
 
         for i, fusion_algorithm in enumerate(self.fusion_algorithms):
             np.random.seed(seed)
-            sim = self.simulation_class(fusion_algorithm)
+            sim = self.simulation_class(fusion_algorithm, self.process)
             sim.run(timesteps)
             if i == 0:
                 process_states = list(map(lambda x: np.squeeze(np.asarray(x)), sim.process.states))
@@ -76,7 +77,6 @@ class MonteCarloExperiment(object):
                 "A": sim.node_a.fused_estimates,
                 "B": sim.node_b.fused_estimates
             }
-            #consistent[fusion_algorithm.algorithm_abbreviation] = [self.is_consistent(fused_estimates[fusion_algorithm.algorithm_abbreviation]["A"][ts], process_states[ts]) for ts in range(timesteps)]
         return process_states, fused_estimates
 
     def run(self, runs, timesteps):
@@ -92,7 +92,8 @@ class MonteCarloExperiment(object):
 
 def main(args):
     fusion_algorithms = [Naive(), CovarianceIntersection(), EllipsoidalIntersection(), InverseCovarianceIntersection()]
-    experiment = MonteCarloExperiment(fusion_algorithms, SimpleSensorNetworkSimulation)
+    process = ConstantVelocity(initial_state=np.zeros(shape=(2, 1)), delta_t=0.01)
+    experiment = MonteCarloMeanSquaredErrors(fusion_algorithms, SimpleSensorNetworkSimulation, process)
     experiment.run(args.runs, args.timesteps)
 
 

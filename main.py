@@ -1,3 +1,4 @@
+from simulation.process_models.constant_velocity import ConstantVelocity
 from simulation.simple_sensor_network import SimpleSensorNetworkSimulation
 from algorithms.covariance_intersection import CovarianceIntersection
 from algorithms.ellipsoidal_intersection import EllipsoidalIntersection
@@ -135,12 +136,13 @@ def main(args):
 
     for i, fusion_algorithm in enumerate(fusion_algorithms):
         np.random.seed(seed)
-        sim = SimpleSensorNetworkSimulation(fusion_algorithm)
+        process = ConstantVelocity(initial_state=np.zeros(shape=(2,1)), delta_t=0.01)
+        sim = SimpleSensorNetworkSimulation(fusion_algorithm, process)
         print("Running simulation {} ({})".format(i, fusion_algorithm.algorithm_abbreviation))
         sim.run(timesteps)
         if i == 0:
             process_states = list(map(lambda x: np.squeeze(np.asarray(x)), sim.process.states))
-            plot_process(sim.process)
+            #plot_process(sim.process)
             # Save local estimates
             local_estimates["A"] = sim.node_a.local_estimates
             local_estimates["B"] = sim.node_b.local_estimates
@@ -149,9 +151,9 @@ def main(args):
             "A": sim.node_a.fused_estimates,
             "B": sim.node_b.fused_estimates
         }
-    plot_results(fusion_algorithms, process_states, fused_estimates)
-    plot_estimation_errors(fusion_algorithms, process_states, fused_estimates)
-    #plot_ellipses(fusion_algorithms, local_estimates, fused_estimates)
+    #plot_results(fusion_algorithms, process_states, fused_estimates)
+    #plot_estimation_errors(fusion_algorithms, process_states, fused_estimates)
+    plot_ellipses(fusion_algorithms, local_estimates, fused_estimates)
 
 
 if __name__ == "__main__":
