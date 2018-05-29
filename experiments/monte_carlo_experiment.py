@@ -8,6 +8,7 @@ from simulation.simple_sensor_network import SimpleSensorNetworkSimulation
 from algorithms.covariance_intersection import CovarianceIntersection
 from algorithms.ellipsoidal_intersection import EllipsoidalIntersection
 from algorithms.inverse_covariance_intersection import InverseCovarianceIntersection
+from algorithms.covariance_intersection import PerformanceCriterion
 from algorithms.naive import Naive
 
 
@@ -38,21 +39,22 @@ class MonteCarloExperiment(object):
             pos_mse[alg.algorithm_abbreviation] = np.mean(pos_squared_errors, axis=0)
             vel_mse[alg.algorithm_abbreviation] = np.mean(vel_squared_errors, axis=0)
 
-        plt.rcParams["figure.figsize"] = (8, 8)
-        res_fig = plt.figure()
-        pos_axes = res_fig.add_subplot(2, 1, 1)
-        for alg in pos_mse.keys():
-            pos_axes.plot(pos_mse[alg], label=alg)
-        pos_axes.legend()
-        pos_axes.set_title("Position MSE (Node {})".format(node))
+        for end_timestep in range(0, timesteps, 10):
+            plt.rcParams["figure.figsize"] = (6, 5)
+            res_fig = plt.figure()
+            pos_axes = res_fig.add_subplot(2, 1, 1)
+            for alg in pos_mse.keys():
+                pos_axes.plot(pos_mse[alg][:end_timestep], label=alg)
+            pos_axes.legend()
+            pos_axes.set_title("Position MSE (Node {})".format(node))
 
-        vel_axes = res_fig.add_subplot(2, 1, 2)
-        for alg in vel_mse.keys():
-            vel_axes.plot(vel_mse[alg], label=alg)
-        vel_axes.legend()
-        vel_axes.set_title("Velocity MSE (Node {})".format(node))
+            vel_axes = res_fig.add_subplot(2, 1, 2)
+            for alg in vel_mse.keys():
+                vel_axes.plot(vel_mse[alg][:end_timestep], label=alg)
+            vel_axes.legend()
+            vel_axes.set_title("Velocity MSE (Node {})".format(node))
 
-        res_fig.show()
+            res_fig.show()
 
 
     def run_trial(self, timesteps):
@@ -91,7 +93,7 @@ class MonteCarloExperiment(object):
 
 
 def main(args):
-    fusion_algorithms = [Naive(), CovarianceIntersection(), EllipsoidalIntersection(), InverseCovarianceIntersection()]
+    fusion_algorithms = [Naive(), CovarianceIntersection(PerformanceCriterion.DETERMINANT), EllipsoidalIntersection(), InverseCovarianceIntersection(PerformanceCriterion.DETERMINANT)]
     experiment = MonteCarloExperiment(fusion_algorithms, SimpleSensorNetworkSimulation)
     experiment.run(args.runs, args.timesteps)
 

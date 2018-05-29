@@ -2,21 +2,13 @@
 Ellipsoidal intersection according to https://pdfs.semanticscholar.org/30b3/50418ed164f7f5bdb7bf01fec2e9fa0c61d5.pdf
 """
 
-from enum import Enum
-from scipy.optimize import minimize
 from numpy.linalg import inv, det
 import numpy as np
 from scipy.linalg import sqrtm
 
 
-class PerformanceCriterion(Enum):
-    TRACE = 1,
-    DETERMINANT = 2
-
-
 class EllipsoidalIntersection(object):
-    def __init__(self, performance_criterion=PerformanceCriterion.DETERMINANT):
-        self.performance_criterion = det if performance_criterion == PerformanceCriterion.DETERMINANT else np.trace
+    def __init__(self):
         self.algorithm_name = "Ellipsoidal Intersection"
         self.algorithm_abbreviation = "EI"
 
