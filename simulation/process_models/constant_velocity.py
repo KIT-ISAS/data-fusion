@@ -32,7 +32,7 @@ class ConstantVelocity(object):
         states = list(map(lambda x: np.squeeze(np.asarray(x)), self.states))
         positions = [state[0] for state in states]
         velocities = [state[1] for state in states]
-        axes.plot(positions, label="Position")
-        axes.plot(velocities, label="Velocity")
+        axes.plot(positions, label="Position [m]")
+        axes.plot(velocities, label="Velocity [m/s]")
         axes.legend()
         return axes

@@ -22,21 +22,23 @@ def plot_results(fusion_algorithms, process_states, fused_estimates, node="A"):
         pos_fused[alg.algorithm_abbreviation] = [x[0][0] for x in fused_estimates[alg.algorithm_abbreviation][node]]
         vel_fused[alg.algorithm_abbreviation] = [x[0][1] for x in fused_estimates[alg.algorithm_abbreviation][node]]
 
-    plt.rcParams["figure.figsize"] = (8, 8)
+    plt.rcParams["figure.figsize"] = (6, 4)
     res_fig = plt.figure(2)
     pos_axes = res_fig.add_subplot(2, 1, 1)
-    pos_axes.plot(pos_real, label="Real")
+    pos_axes.plot(pos_real, color="black", linestyle="dashed", label="Real")
     for alg in pos_fused.keys():
         pos_axes.plot(pos_fused[alg], label=alg)
     pos_axes.legend()
     pos_axes.set_title("Position (Node {})".format(node))
+    pos_axes.set_xlabel("Timestep")
 
     vel_axes = res_fig.add_subplot(2, 1, 2)
-    vel_axes.plot(vel_real, label="Real")
+    vel_axes.plot(vel_real, color="black", linestyle="dashed", label="Real")
     for alg in vel_fused.keys():
         vel_axes.plot(vel_fused[alg], label=alg)
     vel_axes.legend()
     vel_axes.set_title("Velocity (Node {})".format(node))
+    vel_axes.set_xlabel("Timestep")
 
     res_fig.show()
 
@@ -63,12 +65,14 @@ def plot_estimation_errors(fusion_algorithms, process_states, fused_estimates, n
         pos_axes.plot(pos_squared_errors[alg], label=alg)
     pos_axes.legend()
     pos_axes.set_title("Squared Error (Position) (Node {})".format(node))
+    pos_axes.set_xlabel("Timestep")
 
     vel_axes = res_fig.add_subplot(2, 1, 2)
     for alg in vel_squared_errors.keys():
         vel_axes.plot(vel_squared_errors[alg], label=alg)
     vel_axes.legend()
     vel_axes.set_title("Squared Error (Velocity) (Node {})".format(node))
+    vel_axes.set_xlabel("Timestep")
 
     res_fig.show()
 
@@ -117,6 +121,7 @@ def plot_process(process):
     plt.rcParams["figure.figsize"] = (4, 3)
     proc_fig = plt.figure()
     proc_axes = proc_fig.add_subplot(111)
+    proc_axes.set_xlabel("Timestep")
     process.plot(proc_axes)
     proc_fig.show()
 

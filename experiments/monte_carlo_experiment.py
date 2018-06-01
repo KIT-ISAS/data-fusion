@@ -47,15 +47,37 @@ class MonteCarloExperiment(object):
                 pos_axes.plot(pos_mse[alg][:end_timestep], label=alg)
             pos_axes.legend()
             pos_axes.set_title("Position MSE (Node {})".format(node))
+            pos_axes.set_xlabel("Timestep")
 
             vel_axes = res_fig.add_subplot(2, 1, 2)
             for alg in vel_mse.keys():
                 vel_axes.plot(vel_mse[alg][:end_timestep], label=alg)
             vel_axes.legend()
             vel_axes.set_title("Velocity MSE (Node {})".format(node))
+            vel_axes.set_xlabel("Timestep")
 
             res_fig.show()
 
+        # Zoom view
+        plt.rcParams["figure.figsize"] = (6, 5)
+        res_fig = plt.figure()
+        pos_axes = res_fig.add_subplot(2, 1, 1)
+        for idx, alg in enumerate(pos_mse.keys()):
+            if not (alg == "EI" or alg == "Naive"):
+                pos_axes.plot(pos_mse[alg][90:timesteps], color="C{}".format(idx), label=alg)
+        pos_axes.legend()
+        pos_axes.set_title("Position MSE (Node {})".format(node))
+        pos_axes.set_xlabel("Timestep")
+
+        vel_axes = res_fig.add_subplot(2, 1, 2)
+        for idx, alg in enumerate(vel_mse.keys()):
+            if not (alg == "EI" or alg == "Naive"):
+                vel_axes.plot(vel_mse[alg][90:timesteps], color="C{}".format(idx), label=alg)
+        vel_axes.legend()
+        vel_axes.set_title("Velocity MSE (Node {})".format(node))
+        vel_axes.set_xlabel("Timestep")
+
+        res_fig.show()
 
     def run_trial(self, timesteps):
         seed = random.randint(0, 10000)
@@ -93,7 +115,7 @@ class MonteCarloExperiment(object):
 
 
 def main(args):
-    fusion_algorithms = [Naive(), CovarianceIntersection(PerformanceCriterion.DETERMINANT), EllipsoidalIntersection(), InverseCovarianceIntersection(PerformanceCriterion.DETERMINANT)]
+    fusion_algorithms = [Naive(), CovarianceIntersection(PerformanceCriterion.TRACE), EllipsoidalIntersection(), InverseCovarianceIntersection(PerformanceCriterion.TRACE)]
     experiment = MonteCarloExperiment(fusion_algorithms, SimpleSensorNetworkSimulation)
     experiment.run(args.runs, args.timesteps)
 

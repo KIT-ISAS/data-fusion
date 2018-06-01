@@ -3,7 +3,7 @@ Covariance Intersection according to http://discovery.ucl.ac.uk/135541/
 """
 
 from enum import Enum
-from scipy.optimize import minimize
+from scipy.optimize import fminbound
 from numpy.linalg import inv, det
 import numpy as np
 
@@ -28,5 +28,5 @@ class CovarianceIntersection(object):
     def optimize_omega(self, cov_a, cov_b):
         def optimize_fn(omega):
             return self.performance_criterion(inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b))))
-        omega_0 = np.array([1.0])
-        return np.clip(minimize(optimize_fn, omega_0).x[0], 0, 1)
+        return fminbound(optimize_fn, 0, 1)
+        #return 0.5

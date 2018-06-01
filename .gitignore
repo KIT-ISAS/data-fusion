@@ -163,3 +163,4 @@ fabric.properties
 ######################### Custom #######################
 .idea
 output
+.vscode
