@@ -3,6 +3,7 @@ import numpy as np
 import argparse
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
+import time
 
 from simulation.simple_sensor_network import SimpleSensorNetworkSimulation
 from algorithms.covariance_intersection import CovarianceIntersection
@@ -24,22 +25,15 @@ class MonteCarloExperiment(object):
         pos_semidefinite = np.all(np.linalg.eigvals(mat) >= 0)
         return pos_semidefinite
 
-    def plot_mean_squared_errors(self, process_states, fused_estimates, node="A"):
-        timesteps = len(process_states[0])
+    def plot_mean_squared_errors(self, pos_squared_errors, vel_squared_errors, node="A"):
+        timesteps = len(pos_squared_errors[0]["Naive"])
         pos_mse = {}
         vel_mse = {}
         for alg in self.fusion_algorithms:
-            pos_squared_errors = []
-            vel_squared_errors = []
-            for run_idx, item in enumerate(fused_estimates):
-               pos_fused = [item[alg.algorithm_abbreviation][node][i][0][0] for i in range(timesteps)]
-               vel_fused = [item[alg.algorithm_abbreviation][node][i][0][1] for i in range(timesteps)]
-               pos_squared_errors.append([(pos_fused[i] - process_states[run_idx][i][0])**2 for i in range(timesteps)])
-               vel_squared_errors.append([(vel_fused[i] - process_states[run_idx][i][1])**2 for i in range(timesteps)])
-            pos_mse[alg.algorithm_abbreviation] = np.mean(pos_squared_errors, axis=0)
-            vel_mse[alg.algorithm_abbreviation] = np.mean(vel_squared_errors, axis=0)
+            pos_mse[alg.algorithm_abbreviation] = np.mean([pos_squared_errors[i][alg.algorithm_abbreviation] for i in range(len(pos_squared_errors))], axis=0)
+            vel_mse[alg.algorithm_abbreviation] = np.mean([vel_squared_errors[i][alg.algorithm_abbreviation] for i in range(len(vel_squared_errors))], axis=0)
 
-        for end_timestep in range(0, timesteps, 10):
+        for end_timestep in range(10, timesteps + 10, 10):
             plt.rcParams["figure.figsize"] = (6, 5)
             res_fig = plt.figure()
             pos_axes = res_fig.add_subplot(2, 1, 1)
@@ -62,29 +56,40 @@ class MonteCarloExperiment(object):
         plt.rcParams["figure.figsize"] = (6, 5)
         res_fig = plt.figure()
         pos_axes = res_fig.add_subplot(2, 1, 1)
+        max_y = 0
+        min_y = 100000
         for idx, alg in enumerate(pos_mse.keys()):
             if not (alg == "EI" or alg == "Naive"):
-                pos_axes.plot(pos_mse[alg][90:timesteps], color="C{}".format(idx), label=alg)
+                pos_axes.plot(pos_mse[alg], color="C{}".format(idx), label=alg)
+                max_y = max(max_y, max(pos_mse[alg][80:timesteps]))
+                min_y = min(min_y, min(pos_mse[alg][80:timesteps]))
         pos_axes.legend()
         pos_axes.set_title("Position MSE (Node {})".format(node))
         pos_axes.set_xlabel("Timestep")
+        pos_axes.set_xlim(80, timesteps - 1)
+        pos_axes.set_ylim(min_y, max_y)
 
         vel_axes = res_fig.add_subplot(2, 1, 2)
+        max_y = 0
+        min_y = 100000
         for idx, alg in enumerate(vel_mse.keys()):
             if not (alg == "EI" or alg == "Naive"):
-                vel_axes.plot(vel_mse[alg][90:timesteps], color="C{}".format(idx), label=alg)
+                vel_axes.plot(vel_mse[alg], color="C{}".format(idx), label=alg)
+                max_y = max(max_y, max(vel_mse[alg][80:timesteps]))
+                min_y = min(min_y, min(vel_mse[alg][80:timesteps]))
         vel_axes.legend()
         vel_axes.set_title("Velocity MSE (Node {})".format(node))
         vel_axes.set_xlabel("Timestep")
+        vel_axes.set_xlim(80, timesteps - 1)
+        vel_axes.set_ylim(min_y, max_y)
 
         res_fig.show()
 
     def run_trial(self, timesteps):
         seed = random.randint(0, 10000)
         process_states = []
-        local_estimates = {}
-        fused_estimates = {}
-        consistent = {}
+        pos_squared_errors = {}
+        vel_squared_errors = {}
 
         for i, fusion_algorithm in enumerate(self.fusion_algorithms):
             np.random.seed(seed)
@@ -92,33 +97,29 @@ class MonteCarloExperiment(object):
             sim.run(timesteps)
             if i == 0:
                 process_states = list(map(lambda x: np.squeeze(np.asarray(x)), sim.process.states))
-                # Save local estimates
-                local_estimates["A"] = sim.node_a.local_estimates
-                local_estimates["B"] = sim.node_b.local_estimates
             # Save fused estimates
-            fused_estimates[fusion_algorithm.algorithm_abbreviation] = {
-                "A": sim.node_a.fused_estimates,
-                "B": sim.node_b.fused_estimates
-            }
-            #consistent[fusion_algorithm.algorithm_abbreviation] = [self.is_consistent(fused_estimates[fusion_algorithm.algorithm_abbreviation]["A"][ts], process_states[ts]) for ts in range(timesteps)]
-        return process_states, fused_estimates
+            fused_estimates = sim.node_a.fused_estimates
+            pos_squared_errors[fusion_algorithm.algorithm_abbreviation] = [(fused_estimates[i][0][0] - process_states[i][0]) ** 2 for i in range(timesteps)]
+            vel_squared_errors[fusion_algorithm.algorithm_abbreviation] = [(fused_estimates[i][0][1] - process_states[i][1]) ** 2 for i in range(timesteps)]
+
+        return pos_squared_errors, vel_squared_errors
 
     def run(self, runs, timesteps):
         print("Running Monte Carlo simulation with {} runs à {} timesteps...".format(runs, timesteps))
-        self.trials_completed = 0
         pool = Pool()
         res = pool.map(self.run_trial, [timesteps for i in range(runs)])
         pool.close()
         pool.join()
-        process_states, fused_estimates = map(list, zip(*res))
-        self.plot_mean_squared_errors(process_states, fused_estimates)
+        pos_squared_errors, vel_squared_errors = map(list, zip(*res))
+        self.plot_mean_squared_errors(pos_squared_errors, vel_squared_errors)
 
 
 def main(args):
-    fusion_algorithms = [Naive(), CovarianceIntersection(PerformanceCriterion.TRACE), EllipsoidalIntersection(), InverseCovarianceIntersection(PerformanceCriterion.TRACE)]
+    start_time = time.time()
+    fusion_algorithms = [Naive(), CovarianceIntersection(PerformanceCriterion.DETERMINANT), EllipsoidalIntersection(), InverseCovarianceIntersection(PerformanceCriterion.DETERMINANT)]
     experiment = MonteCarloExperiment(fusion_algorithms, SimpleSensorNetworkSimulation)
     experiment.run(args.runs, args.timesteps)
-
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
