@@ -13,7 +13,8 @@ class ConstantVelocity(object):
         self.G = np.array([[(delta_t ** 2) / 2.0],
                            [delta_t]])
         self.Q = np.multiply(noise_variance, np.dot(self.G, self.G.T))
-        self.noise_stddev = np.sqrt(noise_variance)
+        #self.noise_stddev = np.sqrt(noise_variance)
+        self.noise_stddev = 0
         self.current_state = initial_state
         self.states = []
 

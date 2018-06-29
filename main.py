@@ -41,6 +41,7 @@ def plot_results(fusion_algorithms, process_states, fused_estimates, node="A"):
     vel_axes.set_xlabel("Timestep")
 
     res_fig.show()
+    res_fig.savefig("/home/bal/Projects/data-fusion/output/results.png", dpi=900)
 
 
 def plot_estimation_errors(fusion_algorithms, process_states, fused_estimates, node="A"):
@@ -75,6 +76,7 @@ def plot_estimation_errors(fusion_algorithms, process_states, fused_estimates, n
     vel_axes.set_xlabel("Timestep")
 
     res_fig.show()
+    res_fig.savefig("/home/bal/Projects/data-fusion/output/errors.png", dpi=900)
 
 
 def plot_ellipses(fusion_algorithms, local_estimates, fused_estimates):

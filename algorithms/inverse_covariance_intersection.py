@@ -30,5 +30,5 @@ class InverseCovarianceIntersection(object):
 
     def optimize_omega(self, cov_a, cov_b):
         def optimize_fn(omega):
-            return self.performance_criterion(inv(np.multiply(omega, inv(cov_a)) + np.multiply(1 - omega, inv(cov_b))))
+            return self.performance_criterion(inv(inv(cov_a) + inv(cov_b) - inv(np.multiply(omega, cov_a) + np.multiply(1 - omega, cov_b))))
         return fminbound(optimize_fn, 0, 1)
